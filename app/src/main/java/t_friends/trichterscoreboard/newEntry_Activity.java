@@ -1,31 +1,35 @@
 package t_friends.trichterscoreboard;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
+import static t_friends.trichterscoreboard.Scoreboard_Activity.GlobalData;
 
 
 public class newEntry_Activity extends AppCompatActivity {
 
-    static SQLiteDatabase db;
 
-    EditText etPersonName;
+    Toolbar tbNewEntry;
+    AutoCompleteTextView etPersonName;
     EditText etTime;
     EditText etEventName;
     Button btnAdd;
-    Button btnGet;
     Button btnCancel;
-    Button btnDelete;
-    TextView tvSBEntry;
+    Boolean GlobalDataChanged;
     String autofill_pn;     //Liste mit PersonNmen welche für das Autofill genutzt werden
     String autofill_en;     //Liste mit EventNamen
 
@@ -35,27 +39,40 @@ public class newEntry_Activity extends AppCompatActivity {
         setContentView(R.layout.newentry_layout);
 
         // init views
-        etPersonName = (EditText) findViewById(R.id.editText_InsertName);
+        tbNewEntry = (Toolbar) findViewById(R.id.toolbar_newEntry);
+        setSupportActionBar(tbNewEntry);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        etPersonName = (AutoCompleteTextView) findViewById(R.id.editText_InsertName);
         etTime = (EditText) findViewById(R.id.editText_InsertTime);
         etEventName = (EditText) findViewById(R.id.editText_InsertEvent);
         btnAdd = (Button) findViewById(R.id.button_add);
-        btnGet = (Button) findViewById(R.id.button_get);
         btnCancel = (Button) findViewById(R.id.button_cancel);
-        btnDelete = (Button) findViewById(R.id.button_delete);
-        tvSBEntry = (TextView) findViewById(R.id.textView_ShowName);
 
+        // init variabels
+        GlobalDataChanged = Boolean.FALSE;
+        //TrichterPerson tpp = GlobalData.get(GlobalData.size()-1);
+        //etPersonName.setText(tpp.getPersonName());
 
-        //setup database
-        PracticeDatabaseHelper dbHelper = new PracticeDatabaseHelper(this);
-        dbHelper.onUpgrade(dbHelper.getWritableDatabase(), 1, 2);
-        final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         //setup autofill
-        //String[] autofill_pn = cupboard().withDatabase(db).query(TrichterRun.class).get();
+        int ii = GlobalData.size();
+        String[] autofill_pn = new String[ii];
+        int i=0;
+        for (TrichterPerson tp : GlobalData){
+            autofill_pn[i]=tp.getPersonName();
+            i++;
+        }
+        Log.d("tag", "newEntry before ArrayAdapter");
         //getResources().getStringArray(R.array.list_of_countries);
-        //ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,countries);
-        //actv.setAdapter(adapter);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn);
+        etPersonName.setAdapter(adapter);
 
+        // Set Layout Listener
+        // **1** Toolbar
+
+
+
+        // **2** Add Entry
         btnAdd.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick (View view){
@@ -67,7 +84,14 @@ public class newEntry_Activity extends AppCompatActivity {
                     //if()
                     TrichterPerson tp = new TrichterPerson(pn);
                     tp.create_event(t, d, en);
-                    cupboard().withDatabase(db).put(tp);
+                    GlobalData.add(tp);
+                    GlobalDataChanged = Boolean.TRUE;
+
+                    Intent backToMain =new Intent(newEntry_Activity.this, Scoreboard_Activity.class);
+                    backToMain.putExtra("GlobalDataChanged",GlobalDataChanged);
+                    startActivity(backToMain);
+
+
                     // empty the edit text time
                     etTime.setText("");
                 }else{
@@ -76,21 +100,7 @@ public class newEntry_Activity extends AppCompatActivity {
             }
         });
 
-        btnGet.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick (View view){
-                TrichterPerson tr = cupboard().withDatabase(db).query(TrichterPerson.class).get();
-                //TrichterRun tr = cupboard().withDatabase(db).query(TrichterRun.class).withSelection( "PersonName = ?", "Thomas").get();
-
-                String pn =tr.getPersonName();
-                if (!pn.isEmpty()) {
-                    tvSBEntry.setText("The Name is: " +pn);
-                }else{
-                    Toast.makeText(getApplicationContext(),"No Name found!",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
+        // **3** Cancel Entry
         btnCancel.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick (View view) {
@@ -100,12 +110,6 @@ public class newEntry_Activity extends AppCompatActivity {
             }
         });
 
-        btnDelete.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick (View view) {
-                cupboard().withDatabase(db).delete(TrichterPerson.class,null);
-            }
-        });
-
     }
 }
+//  Toast.makeText(getApplicationContext(),"No Name found!",Toast.LENGTH_SHORT).show();

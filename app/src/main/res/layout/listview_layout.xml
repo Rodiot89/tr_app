@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/listview_main"
+    >
+
+
+
+    <TextView
+        android:id="@+id/listView_eventName"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="8dp"
+        android:text="17.Nov.2017"
+        android:gravity="center_vertical|left"
+        app:layout_constraintLeft_toRightOf="@+id/listView_date"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/listView_date"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="8dp"
+        android:text="17.Nov.2017"
+        android:gravity="center_vertical|center_horizontal"
+        app:layout_constraintLeft_toRightOf="@+id/listView_time"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/listView_time"
+        android:layout_width="60dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="8dp"
+        android:text="20,999"
+        android:gravity="center_vertical|center_horizontal"
+        app:layout_constraintLeft_toRightOf="@+id/listView_personName"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/listView_personName"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="8dp"
+        android:text="Sebastian Krahmer"
+        android:gravity="center_vertical|center_horizontal"
+        app:layout_constraintLeft_toRightOf="@+id/listView_image"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/listView_image"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintLeft_toRightOf="@+id/listView_rank"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@mipmap/ic_launcher_round" />
+
+    <TextView
+        android:id="@+id/listView_rank"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginTop="8dp"
+        android:text="9999"
+        android:gravity="center_vertical|right"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
