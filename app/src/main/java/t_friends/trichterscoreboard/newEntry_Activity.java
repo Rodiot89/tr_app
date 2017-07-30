@@ -16,8 +16,11 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 import static t_friends.trichterscoreboard.Scoreboard_Activity.GlobalData;
+import static t_friends.trichterscoreboard.Scoreboard_Activity.SortList;
 
 
 public class newEntry_Activity extends AppCompatActivity {
@@ -26,12 +29,15 @@ public class newEntry_Activity extends AppCompatActivity {
     Toolbar tbNewEntry;
     AutoCompleteTextView etPersonName;
     EditText etTime;
-    EditText etEventName;
+    AutoCompleteTextView etEventName;
     Button btnAdd;
     Button btnCancel;
     Boolean GlobalDataChanged;
-    String autofill_pn;     //Liste mit PersonNmen welche für das Autofill genutzt werden
-    String autofill_en;     //Liste mit EventNamen
+    Boolean PersonAlreadyExits;
+    HashSet<String> autofill_pn = new HashSet<>();      //AutoFillListe mit PersonNamen (ohne Duplikate)
+    HashSet<String> autofill_en = new HashSet<>();           //AutoFillListe mit EventNamen (ohne Duplikate)
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,28 +50,24 @@ public class newEntry_Activity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         etPersonName = (AutoCompleteTextView) findViewById(R.id.editText_InsertName);
         etTime = (EditText) findViewById(R.id.editText_InsertTime);
-        etEventName = (EditText) findViewById(R.id.editText_InsertEvent);
+        etEventName = (AutoCompleteTextView) findViewById(R.id.editText_InsertEvent);
         btnAdd = (Button) findViewById(R.id.button_add);
         btnCancel = (Button) findViewById(R.id.button_cancel);
 
         // init variabels
         GlobalDataChanged = Boolean.FALSE;
-        //TrichterPerson tpp = GlobalData.get(GlobalData.size()-1);
-        //etPersonName.setText(tpp.getPersonName());
+        PersonAlreadyExits = Boolean.FALSE;
 
 
         //setup autofill
-        int ii = GlobalData.size();
-        String[] autofill_pn = new String[ii];
-        int i=0;
-        for (TrichterPerson tp : GlobalData){
-            autofill_pn[i]=tp.getPersonName();
-            i++;
-        }
-        Log.d("tag", "newEntry before ArrayAdapter");
-        //getResources().getStringArray(R.array.list_of_countries);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn);
-        etPersonName.setAdapter(adapter);
+        autofill_pn=getUniquePersonNamesOfGlobalData();
+        final ArrayAdapter<String> adapter_pn = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn.toArray(new String[autofill_pn.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
+        etPersonName.setAdapter(adapter_pn);
+
+        autofill_en=getUniqueEventNamesOfSortList();
+        final ArrayAdapter<String> adapter_en = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_en.toArray(new String[autofill_en.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
+        etEventName.setAdapter(adapter_en);
+
 
         // Set Layout Listener
         // **1** Toolbar
@@ -80,11 +82,21 @@ public class newEntry_Activity extends AppCompatActivity {
                 double t = Double.parseDouble(etTime.getText().toString());
                 long d = Calendar.getInstance().getTimeInMillis();
                 String en = etEventName.getText().toString();
-                if (!(pn.isEmpty() || t==0)) {
-                    //if()
-                    TrichterPerson tp = new TrichterPerson(pn);
-                    tp.create_event(t, d, en);
-                    GlobalData.add(tp);
+                if (!(pn.isEmpty() || t==0)) {  // Testfeld darf nicht leer sein --> Toast
+                    //Prüfen ob Person bereits vorhanden
+                    for (TrichterPerson tp : GlobalData){
+                        if (tp.getPersonName().equals(pn)){     // wenn PersonenName bereits vorhanden
+                            tp.create_event(t,d,en);            // erstelle für diese Person neues Event
+                            PersonAlreadyExits = Boolean.TRUE;
+                            Toast.makeText(getApplicationContext(),"Notice: New Event added to an EXISTING Person!",Toast.LENGTH_SHORT).show();
+                        }break;
+                    }
+                    if (PersonAlreadyExits == Boolean.FALSE) {      // wenn Person noch nicht existiert
+                        TrichterPerson tp = new TrichterPerson(pn); // erstelle neue Person mit Event
+                        tp.create_event(t, d, en);
+                        GlobalData.add(tp);
+                        Toast.makeText(getApplicationContext(),"Notice: New Event added to a NEW Person!",Toast.LENGTH_SHORT).show();
+                    }
                     GlobalDataChanged = Boolean.TRUE;
 
                     Intent backToMain =new Intent(newEntry_Activity.this, Scoreboard_Activity.class);
@@ -111,5 +123,28 @@ public class newEntry_Activity extends AppCompatActivity {
         });
 
     }
+
+    // Hilfsmethoden
+    // **1**
+    private  HashSet<String> getUniquePersonNamesOfGlobalData(){
+        for (TrichterPerson tp : GlobalData){
+            autofill_pn.add(tp.getPersonName());
+        }
+        return autofill_pn;
+    }
+
+    // **2**
+    private HashSet<String> getUniqueEventNamesOfSortList(){
+        for (TrichterPerson.TrichterEvent te : SortList){
+            autofill_en.add(te.getEventName());
+        }
+        return autofill_en;
+    }
+
+
+
+
+
+
 }
 //  Toast.makeText(getApplicationContext(),"No Name found!",Toast.LENGTH_SHORT).show();

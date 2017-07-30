@@ -25,7 +25,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
 
     // Definition der Variablen
     public static ArrayList<TrichterPerson> GlobalData;
-    public ArrayList<TrichterPerson.TrichterEvent> SortList = new ArrayList<>();
+    public static ArrayList<TrichterPerson.TrichterEvent> SortList = new ArrayList<>();
     final CustomArrayAdapter adapter = new CustomArrayAdapter(this, SortList);
     public long date = Calendar.getInstance().getTimeInMillis();
     public int[] sortStatus = new int[] {0,0,0,0,0}; // Tatus der Sortierung: 0: zurvor andere Sortierung; 1: zuvor gleiche Sortierung; {xx,name,time,date,event}

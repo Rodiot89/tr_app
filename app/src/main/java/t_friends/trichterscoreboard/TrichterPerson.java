@@ -21,7 +21,7 @@ public class TrichterPerson implements Serializable {
     // Constructors
     public TrichterPerson(String personName){
         this.personName = personName;
-        this. eventlist = new LinkedList<>();
+        this.eventlist  = new LinkedList<>();
     }
 
     //Methods
@@ -42,6 +42,7 @@ public class TrichterPerson implements Serializable {
     public int getNumberOfTrichterEvents(){
         return this.eventlist.size();
     }
+
 
     // Inner Classes
      public class TrichterEvent {
