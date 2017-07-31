@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,6 +64,20 @@ public class newEntry_Activity extends AppCompatActivity {
         autofill_pn=getUniquePersonNamesOfGlobalData();
         final ArrayAdapter<String> adapter_pn = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn.toArray(new String[autofill_pn.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
         etPersonName.setAdapter(adapter_pn);
+        etPersonName.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                etPersonName.showDropDown();
+            }
+        });
+        etPersonName.setOnFocusChangeListener(new View.OnFocusChangeListener(){
+            @Override
+            public void onFocusChange(View view, boolean bla) {
+//                Log.d("bla", "blub");
+                etPersonName.showDropDown();
+            }
+        });
+        //etPersonName.setThreshold(0);
 
         autofill_en=getUniqueEventNamesOfSortList();
         final ArrayAdapter<String> adapter_en = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_en.toArray(new String[autofill_en.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
@@ -127,10 +142,18 @@ public class newEntry_Activity extends AppCompatActivity {
     // Hilfsmethoden
     // **1**
     private  HashSet<String> getUniquePersonNamesOfGlobalData(){
-        for (TrichterPerson tp : GlobalData){
-            autofill_pn.add(tp.getPersonName());
+        Collections.sort(SortList, new BeanComparator("date"));
+        Collections.reverse(SortList);
+        for (TrichterPerson.TrichterEvent te :SortList) {
+            autofill_pn.add(te.getParentPersonName());
         }
         return autofill_pn;
+
+
+        /*for (TrichterPerson tp : GlobalData){
+            autofill_pn.add(tp.getPersonName());
+        }
+        return autofill_pn;*/
     }
 
     // **2**

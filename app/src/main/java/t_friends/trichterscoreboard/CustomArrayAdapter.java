@@ -20,7 +20,7 @@ import java.util.ArrayList;
 public class CustomArrayAdapter extends BaseAdapter {
     private final Activity context;
     private ArrayList<TrichterPerson.TrichterEvent> SortList;
-    private SimpleDateFormat simpleDate =  new SimpleDateFormat("yyyy/MM/dd");
+    private SimpleDateFormat simpleDate =  new SimpleDateFormat("yyyy/MM/dd hh:mm:ss");
 
 
     static class ViewHolder {

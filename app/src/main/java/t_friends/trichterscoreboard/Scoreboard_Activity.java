@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -28,7 +30,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
     public static ArrayList<TrichterPerson.TrichterEvent> SortList = new ArrayList<>();
     final CustomArrayAdapter adapter = new CustomArrayAdapter(this, SortList);
     public long date = Calendar.getInstance().getTimeInMillis();
-    public int[] sortStatus = new int[] {0,0,0,0,0}; // Tatus der Sortierung: 0: zurvor andere Sortierung; 1: zuvor gleiche Sortierung; {xx,name,time,date,event}
+    public int[] sortStatus = new int[] {0,0,0,0,0}; // Status der Sortierung: 0: zuvor andere Sortierung; 1: zuvor gleiche Sortierung; {xx,name,time,date,event}
 
 
     // Definition der Layoutfelder
@@ -158,9 +160,14 @@ public class Scoreboard_Activity extends AppCompatActivity {
             }
         });
 
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu1_layout, menu);
 
-
+        return true;
     }
 
 
@@ -223,7 +230,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
 
 
     // **2**
-    private static class  BeanComparator implements Comparator<Object> {
+  /*  private static class  BeanComparator implements Comparator<Object> {
 
         private String getter;
 
@@ -245,7 +252,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
             return (o1 == null) ? -1 : ((o2 == null) ? 1 : ((Comparable<Object>) o1).compareTo(o2));
         }
 
-    }
+    }*/
 }
 
    /*
