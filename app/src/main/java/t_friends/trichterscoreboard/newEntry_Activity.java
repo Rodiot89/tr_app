@@ -1,10 +1,18 @@
 package t_friends.trichterscoreboard;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -32,7 +40,7 @@ public class newEntry_Activity extends AppCompatActivity {
     EditText etTime;
     AutoCompleteTextView etEventName;
     Button btnAdd;
-    Button btnCancel;
+    Button btnClear;
     Boolean GlobalDataChanged;
     Boolean PersonAlreadyExits;
     HashSet<String> autofill_pn = new HashSet<>();      //AutoFillListe mit PersonNamen (ohne Duplikate)
@@ -53,50 +61,114 @@ public class newEntry_Activity extends AppCompatActivity {
         etTime = (EditText) findViewById(R.id.editText_InsertTime);
         etEventName = (AutoCompleteTextView) findViewById(R.id.editText_InsertEvent);
         btnAdd = (Button) findViewById(R.id.button_add);
-        btnCancel = (Button) findViewById(R.id.button_cancel);
+        btnClear = (Button) findViewById(R.id.button_clear);
 
         // init variabels
         GlobalDataChanged = Boolean.FALSE;
         PersonAlreadyExits = Boolean.FALSE;
 
 
-        //setup autofill
-        autofill_pn=getUniquePersonNamesOfGlobalData();
-        final ArrayAdapter<String> adapter_pn = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn.toArray(new String[autofill_pn.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
-        etPersonName.setAdapter(adapter_pn);
-        etPersonName.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                etPersonName.showDropDown();
-            }
-        });
-        etPersonName.setOnFocusChangeListener(new View.OnFocusChangeListener(){
-            @Override
-            public void onFocusChange(View view, boolean bla) {
-//                Log.d("bla", "blub");
-                etPersonName.showDropDown();
-            }
-        });
-        //etPersonName.setThreshold(0);
 
-        autofill_en=getUniqueEventNamesOfSortList();
-        final ArrayAdapter<String> adapter_en = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_en.toArray(new String[autofill_en.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
-        etEventName.setAdapter(adapter_en);
+
+
 
 
         // Set Layout Listener
         // **1** Toolbar
 
 
+        // **2** Auto Complete PersonName
+        autofill_pn=getUniquePersonNamesOfGlobalData(); // holt unique PersonName aus der Globaldata
+        final ArrayAdapter<String> adapter_pn = new ArrayAdapter<>(this,android.R.layout.simple_dropdown_item_1line,autofill_pn.toArray(new String[autofill_pn.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
+        etPersonName.setAdapter(adapter_pn);
 
-        // **2** Add Entry
+        etPersonName.setOnFocusChangeListener(new View.OnFocusChangeListener(){
+            @Override
+            public void onFocusChange(final View view, boolean b) {  // Dropdown menu mit auto suggestion bereits beim ersten Klick auf Feld
+                etPersonName.showDropDown();
+            }
+        });
+        etPersonName.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {    // Dropdown menu mit auto suggestion immer bei klicken auf Feld
+                etPersonName.showDropDown();
+            }
+        });
+
+        etPersonName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence text, int start, int before, int count) {
+                //ColorDrawable drawable = (ColorDrawable) etPersonName.getBackground();
+                for (String pn : autofill_pn){      // prüft ob eingegebener text als Name im GlobalData existiert
+                    if (pn.equals(text.toString())) {
+                        etPersonName.setBackgroundColor(Color.GREEN);  // setzt Farbe neu wenn True
+                        break;
+                    }
+                    else{
+                        etPersonName.setBackgroundColor(Color.TRANSPARENT);  // andernfalls return to transparent
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+
+        // **3** Auto Complete EventName
+        autofill_en=getUniqueEventNamesOfSortList();
+        final ArrayAdapter<String> adapter_en = new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,autofill_en.toArray(new String[autofill_en.size()])); // HashSet --> ArrayList<String> : autofill_pn.toArray(new String[autofill_pn.size()])
+        etEventName.setAdapter(adapter_en);
+
+        etEventName.setOnFocusChangeListener(new View.OnFocusChangeListener(){
+            @Override
+            public void onFocusChange(final View view, boolean b) {
+                etEventName.showDropDown();
+            }
+        });
+        etEventName.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                etEventName.showDropDown();
+            }
+        });
+
+        etEventName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence text, int start, int before, int count) {
+                //ColorDrawable drawable = (ColorDrawable) etPersonName.getBackground();
+                for (String en : autofill_en){      // prüft ob eingegebener text als Name im GlobalData existiert
+                    if (en.equals(text.toString())) {
+                        etEventName.setBackgroundColor(Color.GREEN);  // setzt Farbe neu wenn True
+                        break;
+                    }
+                    else{
+                        etEventName.setBackgroundColor(Color.TRANSPARENT);  // andernfalls return to transparent
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+
+
+
+        // **4** Add Entry
         btnAdd.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick (View view){
-                String pn = etPersonName.getText().toString();
+                String pn = etPersonName.getText().toString().trim();
                 double t = Double.parseDouble(etTime.getText().toString());
                 long d = Calendar.getInstance().getTimeInMillis();
-                String en = etEventName.getText().toString();
+                String en = etEventName.getText().toString().trim();
                 if (!(pn.isEmpty() || t==0)) {  // Testfeld darf nicht leer sein --> Toast
                     //Prüfen ob Person bereits vorhanden
                     for (TrichterPerson tp : GlobalData){
@@ -122,13 +194,13 @@ public class newEntry_Activity extends AppCompatActivity {
                     // empty the edit text time
                     etTime.setText("");
                 }else{
-                    Toast.makeText(getApplicationContext(),"Name of Person must be given!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(),"Name of Person and Time must be given!",Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        // **3** Cancel Entry
-        btnCancel.setOnClickListener(new View.OnClickListener(){
+        // **5** Clear Entry
+        btnClear.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick (View view) {
                 etPersonName.setText("");
@@ -148,16 +220,12 @@ public class newEntry_Activity extends AppCompatActivity {
             autofill_pn.add(te.getParentPersonName());
         }
         return autofill_pn;
-
-
-        /*for (TrichterPerson tp : GlobalData){
-            autofill_pn.add(tp.getPersonName());
-        }
-        return autofill_pn;*/
     }
 
     // **2**
     private HashSet<String> getUniqueEventNamesOfSortList(){
+        Collections.sort(SortList, new BeanComparator("date"));
+        Collections.reverse(SortList);
         for (TrichterPerson.TrichterEvent te : SortList){
             autofill_en.add(te.getEventName());
         }
