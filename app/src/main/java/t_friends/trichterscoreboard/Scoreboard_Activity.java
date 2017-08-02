@@ -3,9 +3,11 @@ package t_friends.trichterscoreboard;
 
 import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatImageButton;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class Scoreboard_Activity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
     // Definition der Variablen
     public static ArrayList<TrichterPerson> GlobalData;
@@ -35,6 +38,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
 
     // Definition der Layoutfelder
     Toolbar tbMain;
+    SearchView searchView;
     TextView header_rank;
     AppCompatImageButton header_sortArrow;
     Button header_name;
@@ -54,6 +58,7 @@ public class Scoreboard_Activity extends AppCompatActivity {
 
         // Initial of layout fields
         tbMain = (Toolbar) findViewById(R.id.toolbar_main);
+        //searchView.setOnQueryTextListener(this);
         setSupportActionBar(tbMain);
         header_rank = (TextView) findViewById(R.id.header_rank);
         header_sortArrow = (AppCompatImageButton) findViewById(R.id.header_sortArrow);
@@ -166,8 +171,8 @@ public class Scoreboard_Activity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu1_layout, menu);
-
-        return true;
+        searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search_menu1));
+        return super.onCreateOptionsMenu(menu);
     }
 
 
