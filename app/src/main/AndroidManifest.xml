@@ -34,9 +34,6 @@
             android:name=".newEntry_Activity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:parentActivityName=".Scoreboard_Activity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="t_friends.trichterscoreboard.Scoreboard_Activity" />
         </activity>
         <activity
             android:name=".thirdActivity"

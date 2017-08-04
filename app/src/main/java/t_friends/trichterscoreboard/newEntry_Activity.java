@@ -12,8 +12,11 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -26,7 +29,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -47,8 +52,11 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
     // Variables
     Toolbar tbNewEntry;
-    ToggleButton tbtnActivateBT;
+    Button btnDiscover;
     ListView lvBTDevices;
+    ProgressBar pbDiscoverBT;
+    ImageView ivGreenLED;
+    //ImageView ivRedLED;
     EditText etTimeToBT;
     AutoCompleteTextView etPersonName;
     EditText etTime;
@@ -59,6 +67,11 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
     Boolean GlobalDataChanged;
     Boolean PersonAlreadyExits;
     Boolean BT_status_On;
+    Boolean BTDiscoverable_status_On;
+    Boolean RequestTime = Boolean.FALSE;
+
+    //StringBuilder messages;
+
     HashSet<String> autofill_pn = new HashSet<>();      //AutoFillListe mit PersonNamen (ohne Duplikate)
     HashSet<String> autofill_en = new HashSet<>();           //AutoFillListe mit EventNamen (ohne Duplikate)
 
@@ -85,12 +98,14 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
                 switch(state){
                     case BluetoothAdapter.STATE_OFF:
+                        BT_status_On = Boolean.FALSE;
                         Log.d(TAG, "onReceive: STATE OFF");
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
                         Log.d(TAG, "mBroadcastReceiver1: STATE TURNING OFF");
                         break;
                     case BluetoothAdapter.STATE_ON:
+                        BT_status_On = Boolean.TRUE;
                         Log.d(TAG, "mBroadcastReceiver1: STATE ON");
                         break;
                     case BluetoothAdapter.STATE_TURNING_ON:
@@ -118,6 +133,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
                 switch (mode) {
                     //Device is in Discoverable Mode
                     case BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE:
+                        BTDiscoverable_status_On = Boolean.TRUE;
                         Log.d(TAG, "mBroadcastReceiver2: Discoverability Enabled.");
                         break;
                     //Device not in discoverable mode
@@ -125,6 +141,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
                         Log.d(TAG, "mBroadcastReceiver2: Discoverability Disabled. Able to receive connections.");
                         break;
                     case BluetoothAdapter.SCAN_MODE_NONE:
+                        BTDiscoverable_status_On =  Boolean.FALSE;
                         Log.d(TAG, "mBroadcastReceiver2: Discoverability Disabled. Not able to receive connections.");
                         break;
                     case BluetoothAdapter.STATE_CONNECTING:
@@ -188,6 +205,25 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         }
     };
 
+    // Handhabt Intent mit Request, später obsolet mit Arduino
+    private final BroadcastReceiver mBroadcastReceiver5 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //String request = intent.getStringExtra("Request");
+            RequestTime = Boolean.TRUE;
+        }
+    };
+
+    // handhabt Intent mit TimeFromArduino
+    private final BroadcastReceiver mBroadcastReceiver6 = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String time = intent.getStringExtra("TimeFromArduino");
+
+            //messages.append(text+"\n");
+            etTime.setText(time);
+        }
+    };
 
 
     // OnCreate OnDestroy
@@ -198,11 +234,16 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
     protected void onDestroy() {
         Log.d(TAG, "onDestroy: called.");
         super.onDestroy();
-        unregisterReceiver(mBroadcastReceiver1);
-        unregisterReceiver(mBroadcastReceiver2);
-        unregisterReceiver(mBroadcastReceiver3);
-        unregisterReceiver(mBroadcastReceiver4);
-        //mBluetoothAdapter.cancelDiscovery();
+        try {
+            this.unregisterReceiver(mBroadcastReceiver1);
+            this.unregisterReceiver(mBroadcastReceiver2);
+            this.unregisterReceiver(mBroadcastReceiver3);
+            this.unregisterReceiver(mBroadcastReceiver4);
+        } catch (Exception e) {
+            Log.i(TAG, "mBroadcastReceiver1 is already unregistered");
+        }
+        mBluetoothAdapter.cancelDiscovery();
+        //disableBT();
     }
 
 
@@ -218,33 +259,56 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         GlobalDataChanged = Boolean.FALSE;
         PersonAlreadyExits = Boolean.FALSE;
         BT_status_On = Boolean.FALSE;
+        BTDiscoverable_status_On = Boolean.FALSE;
 
         // init views
         tbNewEntry = (Toolbar) findViewById(R.id.toolbar_newEntry);
         setSupportActionBar(tbNewEntry);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         etPersonName = (AutoCompleteTextView) findViewById(R.id.editText_InsertName);
         etTime = (EditText) findViewById(R.id.editText_InsertTime);
         etEventName = (AutoCompleteTextView) findViewById(R.id.editText_InsertEvent);
         btnAdd = (Button) findViewById(R.id.button_add);
         btnClear = (Button) findViewById(R.id.button_clear);
 
-        tbtnActivateBT = (ToggleButton) findViewById(R.id.toggleButton_ActivateBT);
-        //btnEnableDisable_Discoverable = (Button) findViewById(R.id.btnDiscoverable_on_off);
+        btnDiscover = (Button) findViewById(R.id.button_Discover);
         lvBTDevices = (ListView) findViewById(R.id.listview_BTDevice);
+        pbDiscoverBT =(ProgressBar) findViewById(R.id.progressBar_DiscoverBT);
+        ivGreenLED = (ImageView) findViewById(R.id.imageView_greenLED);
+        //ivRedLED = (ImageView) findViewById(R.id.imageView_redLED);
+
+        /*RoundedBitmapDrawable dr = RoundedBitmapDrawableFactory.create(res, );
+        dr.setCornerRadius(3);
+        ivRedLED.setImageDrawable(dr);*/
+
         mBTDevices = new ArrayList<>();
-        //btnStartConnection = (Button) findViewById(R.id.btnStartConnection);
         btnGetTimeViaBT = (Button) findViewById(R.id.button_getTimeByBT);
         etTimeToBT = (EditText) findViewById(R.id.editText_NumberToSend);
 
-        //Broadcasts when bond state changes (ie:pairing)
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        // Bluetooth Init
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  //Broadcasts when bond state changes (ie:pairing)
         registerReceiver(mBroadcastReceiver4, filter);
-
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+        enableBT();                 //Activate Bluetooth automatically when activity started
+        if (BT_status_On){
+            enableDiscoverable();   // ser Discoverable for 300s
+        }
+        if (BTDiscoverable_status_On){
+            discoverBTDevices();    // discover Umgebung for pairable bluetooth devices and fill listview
+        }
         lvBTDevices.setOnItemClickListener(newEntry_Activity.this);
 
+        // Bluetooth Chat
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver5, new IntentFilter("incomingRequest"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver6, new IntentFilter("incomingMessage"));
+
+        if (RequestTime){       // wenn RequestTime signal aufgenommen wurde durch BrodcastReceiver5,
+            String TimeToSend = etTimeToBT.getText().toString();        // hole Zeit aus editFeld und sende
+            byte[] bytes = TimeToSend.getBytes(Charset.defaultCharset());
+            mBluetoothConnection.write(bytes);
+        }
 
 
 
@@ -263,18 +327,27 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
         // **1** Bluetooth Buttons
         // **1a** Activate BT
-        tbtnActivateBT.setOnClickListener(new View.OnClickListener() {
+       /* tbtnActivateBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "onClick: enabling/disabling bluetooth.");
                 enableDisableBT();
                 if (BT_status_On){
                     enableDiscoverable();
-                    discoverBTDevices();
+                    if(BTDiscoverable_status_On) {
+                        discoverBTDevices();
+                    }
                 }
             }
-        });
+        });*/
 
+        // **1b** discover BT Devices
+        btnDiscover.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                discoverBTDevices();
+            }
+        });
 
         // **1b** GetTime via BT
         btnGetTimeViaBT.setOnClickListener(new View.OnClickListener() {
@@ -426,13 +499,13 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
     //*****************************************
     //*****************************************
 
-    // **1** Enable && Disable BT
-    public Boolean enableDisableBT(){
+    // **1a** Enable  BT
+    public void enableBT(){
         if(mBluetoothAdapter == null){
-            Log.d(TAG, "enableDisableBT: Does not have BT capabilities.");
+            Log.d(TAG, "enableBT: Does not have BT capabilities.");
         }
         if(!mBluetoothAdapter.isEnabled()){
-            Log.d(TAG, "enableDisableBT: enabling BT.");
+            Log.d(TAG, "enableBT");
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivity(enableBTIntent);
 
@@ -441,15 +514,22 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
             BT_status_On = Boolean.TRUE;
         }
+    }
+
+    // **1b** Disable BT
+    public void disableBT(){
+        if(mBluetoothAdapter == null){
+            Log.d(TAG, "disableBT: Does not have BT capabilities.");
+        }
         if(mBluetoothAdapter.isEnabled()){
-            Log.d(TAG, "enableDisableBT: disabling BT.");
+            Log.d(TAG, "DisableBT");
             mBluetoothAdapter.disable();
 
             IntentFilter BTIntent = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             registerReceiver(mBroadcastReceiver1, BTIntent);
+
             BT_status_On = Boolean.FALSE;
         }
-        return BT_status_On;
     }
 
     // **2** Enable Discoverable
@@ -462,11 +542,13 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
         IntentFilter intentFilter = new IntentFilter(mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
         registerReceiver(mBroadcastReceiver2,intentFilter);
+        BTDiscoverable_status_On = Boolean.TRUE;
     }
 
     // **3** Discover BT devices
     public void discoverBTDevices() {
         Log.d(TAG, "DiscoverBTDevices: Looking for unpaired devices.");
+        pbDiscoverBT.setVisibility(View.VISIBLE);
 
         if(mBluetoothAdapter.isDiscovering()){
             mBluetoothAdapter.cancelDiscovery();
@@ -495,6 +577,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         //first cancel discovery because its very memory intensive.
         mBluetoothAdapter.cancelDiscovery();
+        pbDiscoverBT.setVisibility(View.INVISIBLE);
 
         Log.d(TAG, "onItemClick: You Clicked on a device.");
         String deviceName = mBTDevices.get(i).getName();
@@ -512,7 +595,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
             mBTDevice = mBTDevices.get(i);
             mBluetoothConnection = new BluetoothConnectionService(newEntry_Activity.this);
 
-            startBTConnection(mBTDevice,MY_UUID_INSECURE);
+            startBTConnection(mBTDevice,MY_UUID_INSECURE);      //Start Bluetooth Chat Service
         }
     }
 
@@ -534,7 +617,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
      * NOTE: This will only execute on versions > LOLLIPOP because it is not needed otherwise.
      */
     private void checkBTPermissions() {
-        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
+        if(Build.VERSION.SDK_INT >= 23){
             int permissionCheck = this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
             permissionCheck += this.checkSelfPermission("Manifest.permission.ACCESS_COARSE_LOCATION");
             if (permissionCheck != 0) {
