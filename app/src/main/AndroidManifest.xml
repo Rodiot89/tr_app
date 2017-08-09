@@ -33,7 +33,8 @@
         <activity
             android:name=".newEntry_Activity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:parentActivityName=".Scoreboard_Activity">
+            android:parentActivityName=".Scoreboard_Activity"
+            android:windowSoftInputMode="adjustPan" >
         </activity>
         <activity
             android:name=".thirdActivity"

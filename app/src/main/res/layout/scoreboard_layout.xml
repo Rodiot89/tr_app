@@ -12,11 +12,13 @@
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_main"
-        android:layout_width="368dp"
+        android:layout_width="0dp"
         android:layout_height="56dp"
         android:background="@android:color/holo_green_dark"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:theme="@style/ThemeOverlay.AppCompat.Light"
         app:title="Trichter Scoreboard"
@@ -53,7 +55,8 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar_main"
         app:layout_constraintVertical_bias="0.0">
 
-        <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <android.support.constraint.ConstraintLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/secondConstraintView"
@@ -68,10 +71,12 @@
                 android:id="@+id/tbl_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
                 android:orientation="horizontal"
                 android:showDividers="middle"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginLeft="8dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                android:layout_marginStart="8dp">
 
                 <TableRow>
 
@@ -81,8 +86,8 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_column="1"
+                        android:padding="0dp"
                         android:gravity="center_horizontal|center_vertical"
-                        android:padding="3dip"
                         android:text="No."
                         android:textAllCaps="false"
                         android:textColor="@android:color/background_dark"
@@ -94,7 +99,8 @@
                         android:layout_height="40dp"
                         android:adjustViewBounds="false"
                         android:background="@android:color/transparent"
-                        android:padding="3dip"
+                        android:layout_marginLeft="5dp"
+                        android:padding="0dp"
                         android:scaleType="center"
                         app:srcCompat="@android:drawable/arrow_down_float" />
 
@@ -104,7 +110,8 @@
                         android:layout_width="80dp"
                         android:layout_height="40dp"
                         android:gravity="center_horizontal|center_vertical"
-                        android:padding="3dip"
+                        android:layout_marginLeft="5dp"
+                        android:padding="0dp"
                         android:text="Name"
                         android:textColor="@android:color/background_dark"
                         android:textSize="16sp" />
@@ -115,7 +122,8 @@
                         android:layout_width="60dp"
                         android:layout_height="40dp"
                         android:gravity="center_horizontal|center_vertical"
-                        android:padding="3dip"
+                        android:layout_marginLeft="5dp"
+                        android:padding="0dp"
                         android:text="Time"
                         android:textColor="@android:color/background_dark"
                         android:textSize="16sp" />
@@ -126,7 +134,8 @@
                         android:layout_width="80dp"
                         android:layout_height="40dp"
                         android:gravity="center_horizontal|center_vertical"
-                        android:padding="3dip"
+                        android:layout_marginLeft="5dp"
+                        android:padding="0dp"
                         android:text="Date"
                         android:textColor="@android:color/background_dark"
                         android:textSize="16sp" />
@@ -137,7 +146,8 @@
                         android:layout_width="100dp"
                         android:layout_height="40dp"
                         android:gravity="left|center_vertical"
-                        android:padding="3dip"
+                        android:layout_marginLeft="5dp"
+                        android:padding="0dp"
                         android:text="Event"
                         android:textColor="@android:color/background_dark"
                         android:textSize="16sp" />
@@ -146,6 +156,13 @@
             </TableLayout>
 
 
+            <TextView
+                android:id="@+id/textView_Bottom"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text=""
+                app:layout_constraintBottom_toBottomOf="parent" />
+
             <ListView
                 android:id="@+id/listview_frame"
                 android:layout_width="wrap_content"
@@ -153,16 +170,12 @@
                 android:layout_marginTop="8dp"
                 app:layout_constraintBottom_toTopOf="@+id/textView_Bottom"
                 app:layout_constraintTop_toBottomOf="@+id/tbl_header"
-                app:layout_constraintVertical_bias="1.0">
+                app:layout_constraintVertical_bias="0.0"
+                android:layout_marginLeft="8dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                android:layout_marginStart="8dp">
 
             </ListView>
-
-            <TextView
-                android:id="@+id/textView_Bottom"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text=""
-                app:layout_constraintBottom_toBottomOf="parent" />
 
 
         </android.support.constraint.ConstraintLayout>

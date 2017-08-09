@@ -9,9 +9,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.ColorStateList;
 import android.os.Build;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -35,11 +37,13 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.nio.charset.Charset;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -52,7 +56,8 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
     // Variables
     Toolbar tbNewEntry;
-    Button btnDiscover;
+    FloatingActionButton btnSwitchBT;
+    Button btnScanBT;
     ListView lvBTDevices;
     ProgressBar pbDiscoverBT;
     ImageView ivGreenLED;
@@ -79,13 +84,15 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
     // ********************************************
     // ********************************************
 
-    BluetoothAdapter mBluetoothAdapter;
+    public final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     BluetoothConnectionService mBluetoothConnection;
     BluetoothDevice mBTDevice;
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");    // 00001101-0000-1000-8000-00805F9B34FB   // 8ce255c0-200a-11e0-ac64-0800200c9a66
     public ArrayList<BluetoothDevice> mBTDevices = new ArrayList<>();
+    public ArrayList<String> mBTDevicesStrings = new ArrayList<>();
     public DeviceListAdapter mDeviceListAdapter;
+
 
 
     // Create a BroadcastReceiver for ACTION_FOUND
@@ -158,7 +165,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
 
     /**
      * Broadcast Receiver for listing devices that are not yet paired
-     * -Executed by btnDiscover() method.
+     * -Executed by btnScanBT() method.
      */
     private BroadcastReceiver mBroadcastReceiver3 = new BroadcastReceiver() {
         @Override
@@ -170,11 +177,42 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
                 BluetoothDevice device = intent.getParcelableExtra (BluetoothDevice.EXTRA_DEVICE);
                 mBTDevices.add(device);
                 Log.d(TAG, "onReceive: " + device.getName() + ": " + device.getAddress());
-                mDeviceListAdapter = new DeviceListAdapter(context, R.layout.second_listview_bt_devices_layout, mBTDevices);
-                lvBTDevices.setAdapter(mDeviceListAdapter);
+
+                ArrayList  tempDevices = new ArrayList<String>();
+
+                for (BluetoothDevice b : mBTDevices) {
+                    String paired = "Paired";
+                    if (b.getBondState() != 12) {
+                        paired = "Not Paired";
+                    }
+                    tempDevices.add(b.getName() + " - [ " + paired + " ] ");
+                }
+
+                mBTDevicesStrings.clear();
+
+                mBTDevicesStrings.addAll(tempDevices);
+                mDeviceListAdapter.notifyDataSetChanged();
+
+
+                //mDeviceListAdapter = new DeviceListAdapter(context, R.layout.second_listview_bt_devices_layout, mBTDevices);
+                //lvBTDevices.setAdapter(mDeviceListAdapter);
             }
         }
     };
+
+    private BroadcastReceiver mBroadcastReceiver3b = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            Log.d(TAG, "onReceive: ACTION Discovery finished.");
+
+            if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)){
+                pbDiscoverBT.setVisibility(View.INVISIBLE);
+                btnScanBT.setVisibility(View.VISIBLE);
+                }
+        }
+    };
+
 
     /**
      * Broadcast Receiver that detects bond state changes (Pairing status changes)
@@ -251,9 +289,41 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
             Log.i(TAG, "mBroadcastReceiver1 is already unregistered");
         }
         mBluetoothAdapter.cancelDiscovery();
+        mBluetoothAdapter.disable();
         //disableBT();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+        btnSwitchBT.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                if (BT_status_On){     // wenn BT on, dann schalte BT aus
+                    btnSwitchBT.setBackgroundTintList(ColorStateList.valueOf(0xaaa));
+                    btnScanBT.setVisibility(View.INVISIBLE);
+                    mBluetoothAdapter.cancelDiscovery();
+                    mBluetoothAdapter.disable();
+                    BT_status_On = Boolean.FALSE;
+
+                }
+                else{
+                    btnSwitchBT.setBackgroundTintList(ColorStateList.valueOf(0xff669900));
+                    btnScanBT.setVisibility(View.VISIBLE);
+                    enableBT();                 //Activate Bluetooth automatically when activity started
+                    if (BT_status_On){
+                        enableDiscoverable();   // set Discoverable for 300s
+                    }
+                    if (BTDiscoverable_status_On){
+                        discoverBTDevices();    // discover  for paired and unpaired bluetooth devices and fill listview
+                    }
+                }
+
+            }
+        });
+    }
 
 
 
@@ -280,7 +350,8 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         btnAdd = (Button) findViewById(R.id.button_add);
         btnClear = (Button) findViewById(R.id.button_clear);
 
-        btnDiscover = (Button) findViewById(R.id.button_Discover);
+        btnSwitchBT = (FloatingActionButton) findViewById(R.id.switch_BT_OnOff);
+        btnScanBT = (Button) findViewById(R.id.button_ScanBT);
         lvBTDevices = (ListView) findViewById(R.id.listview_BTDevice);
         pbDiscoverBT =(ProgressBar) findViewById(R.id.progressBar_DiscoverBT);
         ivGreenLED = (ImageView) findViewById(R.id.imageView_greenLED);
@@ -295,17 +366,18 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         etTimeToBT = (EditText) findViewById(R.id.editText_NumberToSend);
 
         // Bluetooth Init
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  //Broadcasts when bond state changes (ie:pairing)
-        registerReceiver(mBroadcastReceiver4, filter);
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        /*IntentFilter filter_discoverBTDevices = new IntentFilter(BluetoothDevice.ACTION_FOUND);    // run Code in mBroadcastReceiver3: update List of found BT devices if BT device(s) found
+        registerReceiver(mBroadcastReceiver3, filter_discoverBTDevices);
 
-        enableBT();                 //Activate Bluetooth automatically when activity started
-        if (BT_status_On){
-            enableDiscoverable();   // ser Discoverable for 300s
-        }
-        if (BTDiscoverable_status_On){
-            discoverBTDevices();    // discover Umgebung for pairable bluetooth devices and fill listview
-        }
+        IntentFilter filter_finishDiscoverBTDevices = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);    // run Code in mBroadcastReceiver3b: update progressbar and btnScanBT if Discovery is over
+        registerReceiver(mBroadcastReceiver3b, filter_finishDiscoverBTDevices);*/
+
+        IntentFilter filter_bondState = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  //Broadcasts when bond state changes (ie:pairing)
+        registerReceiver(mBroadcastReceiver4, filter_bondState);
+        //final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        mDeviceListAdapter = new DeviceListAdapter(this, R.layout.second_listview_bt_devices_layout, mBTDevicesStrings);       // TODO mBTDevices ersetzen durch Arraylist<String of all BT devices>
+        lvBTDevices.setAdapter(mDeviceListAdapter);
         lvBTDevices.setOnItemClickListener(newEntry_Activity.this);
 
         // Bluetooth Chat
@@ -319,7 +391,7 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         // ***********************************************
 
         // **1a** discover BT Devices
-        btnDiscover.setOnClickListener(new View.OnClickListener(){
+        btnScanBT.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 discoverBTDevices();
@@ -524,33 +596,60 @@ public class newEntry_Activity extends AppCompatActivity implements AdapterView.
         BTDiscoverable_status_On = Boolean.TRUE;
     }
 
-    // **3** Discover BT devices
+    // **3a** get and show already paired devices
+    private void getPairedDevices() {
+
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice curDevice : pairedDevices) {
+                mBTDevices.add(curDevice);
+            }
+            Log.i(TAG, "getPairedDevices: Paired Number of Devices : " + pairedDevices.size());
+
+
+            ArrayList  tempDevices = new ArrayList<String>();
+
+            for (BluetoothDevice b : mBTDevices) {
+                String paired = "Paired";
+                if (b.getBondState() != 12) {
+                    paired = "Not Paired";
+                }
+                tempDevices.add(b.getName() + " - [ " + paired + " ] ");
+            }
+            mBTDevicesStrings.clear();
+
+            mBTDevicesStrings.addAll(tempDevices);
+            mDeviceListAdapter.notifyDataSetChanged();
+        }
+    }
+
+
+    // **3b** Discover BT devices
     public void discoverBTDevices() {
-        Log.d(TAG, "DiscoverBTDevices: Looking for unpaired devices.");
+        Log.d(TAG, "DiscoverBTDevices: Looking for BT devices.");
+        btnScanBT.setVisibility(View.INVISIBLE);
         pbDiscoverBT.setVisibility(View.VISIBLE);
-        mBTDevices.clear(); //alte gefundene Devices löschen
+        mBTDevices.clear(); // alte gefunden devices löschen
+        mBTDevicesStrings.clear(); //Strings (Name) der alten Devices löschen
+        mDeviceListAdapter.notifyDataSetChanged();
+
+        getPairedDevices();     // schaue erst nach paired devices
 
         if(mBluetoothAdapter.isDiscovering()){
             mBluetoothAdapter.cancelDiscovery();
-            Log.d(TAG, "DiscoverBTDevices: Canceling discovery.");
-
-            //check BT permissions in manifest
-            checkBTPermissions();
-
-            mBluetoothAdapter.startDiscovery();
-            IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);    // Fülle listview mit gefundenen BT devices
-            registerReceiver(mBroadcastReceiver3, discoverDevicesIntent);
         }
-        if(!mBluetoothAdapter.isDiscovering()){
+        //check BT permissions in manifest
+        checkBTPermissions();
 
-            //check BT permissions in manifest
-            checkBTPermissions();
+        mBluetoothAdapter.startDiscovery();
+        IntentFilter filter_discoverBTDevices = new IntentFilter(BluetoothDevice.ACTION_FOUND);    // run Code in mBroadcastReceiver3: update List of found BT devices if BT device(s) found
+        registerReceiver(mBroadcastReceiver3, filter_discoverBTDevices);
 
-            mBluetoothAdapter.startDiscovery();
-            IntentFilter discoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mBroadcastReceiver3, discoverDevicesIntent);
-        }
+        IntentFilter filter_finishDiscoverBTDevices = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);    // run Code in mBroadcastReceiver3b: update progressbar and btnScanBT if Discovery is over
+        registerReceiver(mBroadcastReceiver3b, filter_finishDiscoverBTDevices);
     }
+
+
 
     // **4* Select Found devices in Listview
     @Override
